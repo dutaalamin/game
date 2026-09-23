@@ -48,13 +48,12 @@ Each game is built independently and its `dist/` output is copied into
 
 1. **`base: './'`** in every Vite config, so asset URLs are relative and resolve
    correctly from a subfolder.
-2. **`assetPrefix: '/games/pokedex'`** in the Pokédex's `next.config.mjs`.
-   Next.js nested routes (`/collection/`) would otherwise look for
-   `_next/` inside the sub-route instead of the game root. Override it with
-   `NEXT_PUBLIC_BASE_PATH` when deploying elsewhere.
+2. **`assetPrefix: '/games/pokedex'`** in the Pokédex's `next.config.mjs`, so
+   the exported `_next/` assets resolve from the game root rather than the
+   sub-route. Override it with `NEXT_PUBLIC_BASE_PATH` when deploying elsewhere.
 
 The Pokédex also sets `output: 'export'` and `trailingSlash: true` so it emits
-plain `collection/index.html` files with no server required.
+plain static HTML with no server required.
 
 ### Rebuilding a game
 
