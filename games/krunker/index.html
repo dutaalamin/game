@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Krunk Arena — Low-Poly FPS</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%; height: 100%;
+        background: #0b0f14;
+        overflow: hidden;
+        font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+        color: #fff;
+        user-select: none;
+      }
+      #app { position: fixed; inset: 0; }
+      #app canvas { display: block; width: 100%; height: 100%; }
+
+      /* ---------- HUD ---------- */
+      #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+
+      .crosshair {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        width: 22px; height: 22px;
+      }
+      .crosshair::before, .crosshair::after {
+        content: ''; position: absolute; background: #6ef;
+        box-shadow: 0 0 4px #0af, 0 0 2px #000;
+      }
+      .crosshair::before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
+      .crosshair::after { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-50%); }
+      .crosshair.hit::before, .crosshair.hit::after { background: #ff4d4d; box-shadow: 0 0 6px #f00; }
+
+      .corner {
+        position: absolute; padding: 10px 14px;
+        background: rgba(8, 12, 18, 0.62);
+        border: 1px solid rgba(110, 238, 255, 0.18);
+        border-radius: 6px;
+        font-size: 13px; line-height: 1.5;
+        letter-spacing: 0.03em;
+        backdrop-filter: blur(4px);
+      }
+      #topleft { left: 16px; top: 16px; min-width: 190px; }
+      #topright { right: 16px; top: 16px; text-align: right; min-width: 150px; }
+      #bottomleft { left: 16px; bottom: 16px; }
+      #bottomright { right: 16px; bottom: 16px; text-align: right; }
+
+      .label { color: #7f93a8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; }
+      .big { font-size: 26px; font-weight: 700; }
+      .accent { color: #6ef; }
+      .warn { color: #ffcf4d; }
+      .bad { color: #ff5b5b; }
+      .good { color: #6dff9e; }
+
+      #hpbar {
+        width: 190px; height: 10px; margin-top: 6px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 5px; overflow: hidden;
+      }
+      #hpfill { height: 100%; width: 100%; background: linear-gradient(90deg,#6dff9e,#39d97a); transition: width 0.12s linear; }
+
+      #killfeed {
+        position: absolute; right: 16px; top: 110px;
+        display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+      }
+      .killline {
+        background: rgba(8, 12, 18, 0.72);
+        border-left: 3px solid #6ef;
+        padding: 5px 10px; border-radius: 4px;
+        font-size: 13px;
+        animation: slideIn 0.18s ease-out;
+      }
+      .killline .me { color: #6dff9e; font-weight: 700; }
+      .killline .them { color: #ff8a8a; }
+      @keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+      #hitmarker {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%,-50%);
+        font-size: 26px; color: #fff; opacity: 0;
+        text-shadow: 0 0 6px #f00;
+      }
+      #hitmarker.show { animation: hitPop 0.22s ease-out; }
+      @keyframes hitPop { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.7); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); } }
+
+      #damageflash {
+        position: absolute; inset: 0;
+        box-shadow: inset 0 0 160px rgba(255, 0, 0, 0);
+        transition: box-shadow 0.12s ease-out;
+      }
+      #damageflash.hit { box-shadow: inset 0 0 160px rgba(255, 0, 0, 0.55); }
+
+      #scoreboard {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+        background: rgba(8, 12, 18, 0.94);
+        border: 1px solid rgba(110,238,255,0.28);
+        border-radius: 10px; padding: 18px 22px; min-width: 380px;
+        display: none;
+      }
+      #scoreboard h2 { font-size: 15px; letter-spacing: 0.16em; color: #6ef; margin-bottom: 12px; text-transform: uppercase; }
+      #scoreboard table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      #scoreboard th { text-align: left; color: #7f93a8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; padding-bottom: 6px; }
+      #scoreboard td { padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.07); }
+      #scoreboard tr.you td { color: #6dff9e; font-weight: 700; }
+
+      /* ---------- overlays ---------- */
+      .overlay {
+        position: fixed; inset: 0; z-index: 30;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: radial-gradient(ellipse at center, rgba(12,20,30,0.86), rgba(5,8,12,0.97));
+        backdrop-filter: blur(3px);
+      }
+      .overlay.hidden { display: none; }
+      .overlay h1 { font-size: 58px; letter-spacing: 0.04em; margin-bottom: 8px; }
+      .overlay h1 span { color: #6ef; }
+      .overlay p { color: #93a7bb; margin-bottom: 6px; font-size: 15px; }
+      .keyrow { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 18px 0 24px; max-width: 640px; }
+      .key { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 7px 12px; font-size: 13px; color: #cfe0ef; }
+      .key b { color: #6ef; }
+      button.play {
+        pointer-events: auto;
+        background: linear-gradient(135deg, #1d9bd1, #6ef);
+        color: #04121a; border: none; border-radius: 8px;
+        padding: 14px 42px; font-size: 18px; font-weight: 800;
+        letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
+        box-shadow: 0 0 26px rgba(110,238,255,0.35);
+      }
+      button.play:hover { transform: translateY(-1px); box-shadow: 0 0 36px rgba(110,238,255,0.55); }
+
+      #loading { font-size: 14px; color: #6ef; letter-spacing: 0.2em; }
+
+      .vignette {
+        position: absolute; inset: 0;
+        box-shadow: inset 0 0 220px rgba(0,0,0,0.75);
+        pointer-events: none;
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-DtCJDjAb.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="hud">
+      <div class="vignette"></div>
+      <div class="crosshair" id="crosshair"></div>
+      <div id="hitmarker">✕</div>
+      <div id="damageflash"></div>
+
+      <div class="corner" id="topleft">
+        <div class="label">Health</div>
+        <div class="big" id="hp">100</div>
+        <div id="hpbar"><div id="hpfill"></div></div>
+      </div>
+
+      <div class="corner" id="topright">
+        <div class="label">Weapon</div>
+        <div class="big" id="weapon">RIFLE</div>
+        <div><span class="accent" id="ammo">30</span> / <span id="reserve">120</span></div>
+        <div class="label" id="reloadhint" style="margin-top:4px">&nbsp;</div>
+      </div>
+
+      <div class="corner" id="bottomleft">
+        <div class="label">Score</div>
+        <div class="big" id="score">0</div>
+        <div class="label">Kills <span class="good" id="kills">0</span> · Deaths <span class="bad" id="deaths">0</span></div>
+      </div>
+
+      <div class="corner" id="bottomright">
+        <div class="label">Match</div>
+        <div class="big" id="timer">5:00</div>
+        <div class="label"><span id="fps">60</span> FPS · <span id="lead">Tied</span></div>
+      </div>
+
+      <div id="killfeed"></div>
+
+      <div id="scoreboard">
+        <h2>Scoreboard — hold TAB</h2>
+        <table>
+          <thead><tr><th>Player</th><th>K</th><th>D</th><th>Score</th></tr></thead>
+          <tbody id="scorebody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="overlay" id="menu">
+      <h1>KRUNK <span>ARENA</span></h1>
+      <p>Low-poly arena deathmatch · you vs. bots</p>
+      <div class="keyrow">
+        <div class="key"><b>WASD</b> move</div>
+        <div class="key"><b>SHIFT</b> sprint</div>
+        <div class="key"><b>SPACE</b> jump</div>
+        <div class="key"><b>CTRL</b> slide</div>
+        <div class="key"><b>C</b> crouch</div>
+        <div class="key"><b>LMB</b> fire</div>
+        <div class="key"><b>RMB</b> aim</div>
+        <div class="key"><b>R</b> reload</div>
+        <div class="key"><b>1-3</b> weapons</div>
+        <div class="key"><b>TAB</b> scoreboard</div>
+      </div>
+      <button class="play" id="playbtn">Play</button>
+    </div>
+
+    <div class="overlay hidden" id="paused">
+      <h1>PAUSED</h1>
+      <p>Click resume to lock the mouse again.</p>
+      <div class="keyrow" style="margin-top:20px">
+        <button class="play" id="resumebtn">Resume</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="matchend">
+      <h1 id="matchendtitle">MATCH OVER</h1>
+      <p id="matchendsub"></p>
+      <div class="keyrow" style="margin-top:20px">
+        <button class="play" id="againbtn">Play Again</button>
+      </div>
+    </div>
+
+  </body>
+</html>

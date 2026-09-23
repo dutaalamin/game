@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Duta Game Hub</title>
+    <meta name="description" content="A collection of browser games — platformers, racing, rhythm, FPS, farming and a Pokédex." />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0d14;
+        --surface: #121722;
+        --surface-2: #1a2130;
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #f2f5fa;
+        --muted: #8a99b0;
+        --accent: #4ea1ff;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ---------- animated backdrop ---------- */
+      .backdrop {
+        position: fixed; inset: 0; z-index: 0; pointer-events: none;
+        background:
+          radial-gradient(60% 50% at 15% 10%, rgba(78, 161, 255, 0.16), transparent 70%),
+          radial-gradient(50% 45% at 85% 20%, rgba(168, 85, 247, 0.14), transparent 70%),
+          radial-gradient(60% 55% at 50% 100%, rgba(34, 197, 94, 0.10), transparent 70%);
+      }
+      .grid {
+        position: fixed; inset: 0; z-index: 0; pointer-events: none;
+        background-image:
+          linear-gradient(to right, rgba(255,255,255,0.028) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255,255,255,0.028) 1px, transparent 1px);
+        background-size: 56px 56px;
+        mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black, transparent 75%);
+      }
+
+      .wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 0 24px 80px; }
+
+      /* ---------- header ---------- */
+      header { padding: 72px 0 44px; text-align: center; }
+      .logo {
+        display: inline-flex; align-items: center; gap: 10px;
+        font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase;
+        color: var(--accent); margin-bottom: 18px;
+        border: 1px solid rgba(78,161,255,0.3);
+        background: rgba(78,161,255,0.08);
+        padding: 7px 16px; border-radius: 100px;
+      }
+      .logo .dot {
+        width: 7px; height: 7px; border-radius: 50%; background: #4ade80;
+        box-shadow: 0 0 8px #4ade80; animation: pulse 2s infinite;
+      }
+      @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
+
+      h1 {
+        font-size: clamp(38px, 7vw, 68px);
+        font-weight: 800; letter-spacing: -0.03em; line-height: 1.02;
+        margin-bottom: 16px;
+      }
+      h1 span {
+        background: linear-gradient(100deg, #4ea1ff, #a855f7 55%, #f472b6);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      header p { color: var(--muted); font-size: 17px; max-width: 560px; margin: 0 auto; line-height: 1.6; }
+
+      .stats {
+        display: flex; gap: 28px; justify-content: center; flex-wrap: wrap;
+        margin-top: 34px; padding-top: 30px; border-top: 1px solid var(--border);
+      }
+      .stat { text-align: center; }
+      .stat b { display: block; font-size: 26px; font-weight: 800; }
+      .stat span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+
+      /* ---------- grid ---------- */
+      .section-label {
+        display: flex; align-items: center; gap: 12px;
+        margin: 48px 0 22px; font-size: 12px; letter-spacing: 0.2em;
+        text-transform: uppercase; color: var(--muted);
+      }
+      .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+      .grid-cards {
+        display: grid; gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      }
+
+      .card {
+        position: relative; display: flex; flex-direction: column;
+        background: linear-gradient(180deg, var(--surface), var(--surface-2));
+        border: 1px solid var(--border); border-radius: 16px;
+        overflow: hidden; text-decoration: none; color: inherit;
+        transition: transform 0.22s cubic-bezier(.2,.8,.3,1), border-color 0.22s, box-shadow 0.22s;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        border-color: var(--card-accent, var(--accent));
+        box-shadow: 0 18px 44px -18px var(--card-accent, var(--accent));
+      }
+      .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+      .thumb {
+        position: relative; height: 148px; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--thumb-bg, #101827);
+      }
+      .thumb::after {
+        content: ''; position: absolute; inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 22px 22px;
+        opacity: 0.5;
+      }
+      .thumb .emoji {
+        position: relative; z-index: 1; font-size: 58px; line-height: 1;
+        filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45));
+        transition: transform 0.3s cubic-bezier(.2,.8,.3,1);
+      }
+      .card:hover .thumb .emoji { transform: scale(1.14) rotate(-4deg); }
+
+      .badge {
+        position: absolute; top: 12px; left: 12px; z-index: 2;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+        padding: 5px 10px; border-radius: 100px;
+        background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.16);
+        backdrop-filter: blur(6px);
+      }
+      .badge.new { background: rgba(74,222,128,0.16); border-color: rgba(74,222,128,0.4); color: #86efac; }
+
+      .card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; flex: 1; }
+      .card-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
+      .card-desc { font-size: 13.5px; color: var(--muted); line-height: 1.55; flex: 1; }
+
+      .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+      .tag {
+        font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em;
+        padding: 4px 9px; border-radius: 6px;
+        background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #b9c6d8;
+      }
+
+      .play {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);
+        font-size: 13px; font-weight: 700; color: var(--card-accent, var(--accent));
+      }
+      .play .arrow { transition: transform 0.22s; }
+      .card:hover .play .arrow { transform: translateX(5px); }
+
+      footer {
+        margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--border);
+        display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+        font-size: 13px; color: var(--muted);
+      }
+      footer a { color: var(--muted); text-decoration: none; }
+      footer a:hover { color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <div class="grid"></div>
+
+    <div class="wrap">
+      <header>
+        <div class="logo"><span class="dot"></span> 7 games · one hub</div>
+        <h1>Duta <span>Game Hub</span></h1>
+        <p>
+          Everything I built, in one place. Platformers, a racing sim, a rhythm
+          game, a 3D shooter, a farming sim, and a Pokédex.
+        </p>
+        <div class="stats">
+          <div class="stat"><b>7</b><span>Games</span></div>
+          <div class="stat"><b>3</b><span>Engines</span></div>
+          <div class="stat"><b>0</b><span>Downloads</span></div>
+        </div>
+      </header>
+
+      <div class="section-label">Arcade &amp; Platformers</div>
+      <div class="grid-cards" id="grid-arcade"></div>
+
+      <div class="section-label">Racing &amp; Rhythm</div>
+      <div class="grid-cards" id="grid-action"></div>
+
+      <div class="section-label">Worlds &amp; Utilities</div>
+      <div class="grid-cards" id="grid-worlds"></div>
+
+      <footer>
+        <span>Built with Phaser · Three.js · PlayCanvas · Next.js</span>
+        <span><a href="README.md">Read the docs</a></span>
+      </footer>
+    </div>
+
+    <script>
+      const GAMES = [
+        {
+          id: 'sonic',
+          title: 'Sonic',
+          emoji: '🦔',
+          group: 'arcade',
+          desc: 'Momentum platformer with rings, spikes, a boss fight and a Green Hill backdrop.',
+          tags: ['Phaser 3', 'Platformer', 'TypeScript'],
+          accent: '#2a6fdb',
+          thumb: 'linear-gradient(140deg,#0b2a6b,#1a5fc0 55%,#4aa3ff)',
+          badge: null,
+        },
+        {
+          id: 'mario',
+          title: 'Super Mario',
+          emoji: '🍄',
+          group: 'arcade',
+          desc: 'Three power states, ?-blocks, Koopa shells and a flagpole finish across three worlds.',
+          tags: ['Phaser 3', 'Platformer', 'Power-ups'],
+          accent: '#e23b3b',
+          thumb: 'linear-gradient(140deg,#5c94fc,#2a6fdb 60%,#0b2a6b)',
+          badge: null,
+        },
+        {
+          id: 'geometrydash',
+          title: 'Neon Dash',
+          emoji: '⚡',
+          group: 'action',
+          desc: 'One-button rhythm platformer. Auto-run, jump to the beat, neon bloom and particle trails.',
+          tags: ['Phaser 3', 'Rhythm', 'Neon'],
+          accent: '#00e5ff',
+          thumb: 'linear-gradient(140deg,#071a2e,#0a3a5a 55%,#00e5ff)',
+          badge: null,
+        },
+        {
+          id: 'duta-racing',
+          title: 'Duta Racing',
+          emoji: '🏎️',
+          group: 'action',
+          desc: 'Arcade time-attack racer. A spline circuit, four AI rivals, drift physics and a 3D chase camera.',
+          tags: ['Three.js', 'Racing', 'AI'],
+          accent: '#f59e0b',
+          thumb: 'linear-gradient(140deg,#3a1a06,#a85a10 55%,#f5b400)',
+          badge: 'NEW',
+        },
+        {
+          id: 'krunker',
+          title: 'Krunk Arena',
+          emoji: '🔫',
+          group: 'action',
+          desc: 'Low-poly arena FPS. Hitscan weapons, headshots, bot AI and a five-minute deathmatch.',
+          tags: ['PlayCanvas', 'FPS', '3D'],
+          accent: '#8b5cf6',
+          thumb: 'linear-gradient(140deg,#160b2e,#4a1f8a 55%,#a855f7)',
+          badge: null,
+        },
+        {
+          id: 'harvestmoon',
+          title: 'Harvest Moon',
+          emoji: '🌾',
+          group: 'worlds',
+          desc: 'Isometric farming sim. Till, plant, water, harvest, raise animals, befriend villagers.',
+          tags: ['Phaser 3', 'Farming', 'Isometric'],
+          accent: '#22c55e',
+          thumb: 'linear-gradient(140deg,#0b2a14,#1a6b34 55%,#4ade80)',
+          badge: null,
+        },
+        {
+          id: 'pokedex',
+          title: 'Pokédex',
+          emoji: '📕',
+          group: 'worlds',
+          desc: 'Retro Pokédex mini-game. Encounter wild Pokémon, charge your throw, and watch them battle.',
+          tags: ['Next.js', 'React', 'Interactive'],
+          accent: '#ef4444',
+          thumb: 'linear-gradient(140deg,#3a0a0a,#b91c1c 55%,#f87171)',
+          badge: 'NEW',
+        },
+      ];
+
+      function card(g) {
+        const badge = g.badge ? `<span class="badge new">${g.badge}</span>` : `<span class="badge">Play</span>`;
+        return `
+          <a class="card" href="games/${g.id}/" style="--card-accent:${g.accent}">
+            <div class="thumb" style="--thumb-bg:${g.thumb}">
+              ${badge}
+              <span class="emoji">${g.emoji}</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">${g.title}</div>
+              <p class="card-desc">${g.desc}</p>
+              <div class="tags">${g.tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>
+              <div class="play"><span>Play now</span><span class="arrow">→</span></div>
+            </div>
+          </a>`;
+      }
+
+      for (const group of ['arcade', 'action', 'worlds']) {
+        document.getElementById('grid-' + group).innerHTML =
+          GAMES.filter((g) => g.group === group).map(card).join('');
+      }
+    </script>
+  </body>
+</html>
