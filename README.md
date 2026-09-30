@@ -1,6 +1,6 @@
 # Duta Game Hub
 
-Seven browser games in one place, served from a single static folder.
+Eight browser games in one place, served from a single static folder.
 
 ```
 D:/game
@@ -10,6 +10,7 @@ D:/game
 │   ├── sonic/          momentum platformer        (Phaser 3)
 │   ├── mario/          power-up platformer        (Phaser 3)
 │   ├── geometrydash/   one-button rhythm game     (Phaser 3)
+│   ├── breaker/        neon brick breaker         (Canvas 2D)
 │   ├── krunker/        low-poly arena FPS         (PlayCanvas)
 │   ├── duta-racing/    arcade time-attack racer   (Three.js)
 │   ├── harvestmoon/    isometric farming sim      (Phaser 3)
@@ -36,6 +37,7 @@ The server uses only Node's built-in modules — no `npm install` required.
 | **Sonic** | Platformer | Phaser 3 | Momentum movement, ring pickups, 5 enemy types, boss fight, Green Hill backdrop |
 | **Super Mario** | Platformer | Phaser 3 | 3 power states, `?`-blocks, Koopa shells, flagpole finish, 3 worlds |
 | **Neon Dash** | Rhythm | Phaser 3 | Auto-run cube, 90° rotation, jump orbs, 128 BPM sequencer, beat-synced bloom |
+| **Neon Breaker** | Arcade | Canvas 2D | Neon glow, ball trails, combo multipliers, 5 power-ups, 8 levels |
 | **Duta Racing** | Racing | Three.js | Catmull-Rom circuit, 4 AI rivals, drift physics, chase camera, minimap |
 | **Krunk Arena** | FPS | PlayCanvas | Hitscan weapons, headshots, bot AI with LOS, 5-minute deathmatch |
 | **Harvest Moon** | Farming sim | Phaser 3 | Isometric map, crops with seasons, animals, villager friendship, save/load |
